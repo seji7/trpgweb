@@ -1,25 +1,48 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import SignUpPage from "./pages/SignUpPage";
+import LoginPage from "./pages/LoginPage";
+import RoomListPage from "./pages/RoomListPage";
+import RoomCreatePage from "./pages/RoomCreatePage";
+import RoomDetailPage from "./pages/RoomDetailPage";
+import { useEffect, useState } from "react";
+import { fetchMe } from "./api/memberApi";
+import { MemberInfo } from "./types/dto";
+import Header from "./components/Header";
+import RoomPlayPage from "./pages/RoomPlayPage";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+  const [currentUser, setCurrentUser] = useState<MemberInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMe()
+      .then(user => setCurrentUser(user))
+      .catch(() => setCurrentUser(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="container mt-5 text-center">
+      <div className="spinner-border" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
     </div>
+  );
+
+  return (
+    <BrowserRouter>
+      <Header currentUser={currentUser} setCurrentUser={setCurrentUser} />
+      <div className="container mt-4">
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/login" element={<LoginPage setCurrentUser={setCurrentUser} />} />
+          <Route path="/rooms" element={<RoomListPage currentUser={currentUser} />} />
+          <Route path="/room/create" element={<RoomCreatePage />} />
+          <Route path="/rooms/:rno" element={<RoomDetailPage currentUser={currentUser} />} />
+          <Route path="/rooms/:rno/play" element={<RoomPlayPage currentUser={currentUser} />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
