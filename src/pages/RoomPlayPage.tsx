@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getRoomDetail, deleteRoom } from "../api/roomApi";
+import { getRoomDetail } from "../api/roomApi";
 import { MemberInfo, RoomResponse } from "../types/dto";
 
 const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
@@ -9,10 +9,9 @@ const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
 
     const [room, setRoom] = useState<RoomResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
     const [logs, setLogs] = useState<string[]>([]);
 
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         if (!rno) return;
@@ -20,25 +19,6 @@ const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
             .then(setRoom)
             .catch(err => setError(err.response?.data?.message || "오류 발생"));
     }, [rno]);
-
-    const isOwnerOrAdmin =
-        currentUser &&
-        room &&
-        (room.ownerMid === currentUser.mid || currentUser.userRole === "ADMIN");
-
-    const handleDeleteClick = () => setModalOpen(true);
-    const handleModalClose = () => setModalOpen(false);
-    const handleDeleteConfirm = async () => {
-        if (!room) return;
-        try {
-            await deleteRoom(room.rno);
-            navigate("/rooms");
-        } catch (err: any) {
-            setError(err.response?.data?.message || "삭제 실패");
-        } finally {
-            setModalOpen(false);
-        }
-    };
 
     const handleSend = () => {
         const msg = inputRef.current?.value?.trim();
@@ -58,19 +38,29 @@ const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
 
     return (
         <div className="vh-100 d-flex flex-column">
-            {/* 상단 버튼 바 */}
-            <div className="d-flex justify-content-between align-items-center border-bottom bg-light p-2">
-                <button className="btn btn-outline-secondary btn-sm" onClick={() => navigate(`/rooms/${rno}`)}>
-                    방 정보 보기
-                </button>
-                {isOwnerOrAdmin && (
-                    <button className="btn btn-danger btn-sm" onClick={handleDeleteClick}>
-                        방 삭제
+            {/* 상단 고정 헤더 */}
+            <div
+                className="d-flex align-items-center justify-content-between px-3 py-2 bg-dark text-white"
+                style={{ height: "48px", zIndex: 1030, cursor: "pointer" }}
+            >
+                <span
+                    className="fw-bold"
+                    onClick={() => navigate("/rooms")}
+                    style={{ userSelect: "none" }}
+                >
+                    TRPG Web - {room?.title ?? "방"}
+                </span>
+                <div>
+                    <button className="btn btn-sm btn-outline-light me-2" onClick={() => navigate(`/rooms/${rno}`)}>
+                        방 정보
                     </button>
-                )}
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => navigate("/rooms")}>
+                        나가기
+                    </button>
+                </div>
             </div>
 
-            {/* 메인 컨텐츠 영역 */}
+            {/* 메인 컨텐츠 */}
             <div className="flex-grow-1 d-flex" style={{ minHeight: 0 }}>
                 {/* 좌측: 맵 공간 */}
                 <div className="flex-grow-1 d-flex align-items-center justify-content-center bg-body-secondary">
@@ -96,41 +86,25 @@ const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
                             </div>
                         ))}
                     </div>
-                    <div className="d-flex">
-                        <input
-                            type="text"
-                            className="form-control form-control-sm me-2"
+                    <div className="d-flex align-items-end">
+                        <textarea
+                            className="form-control me-2"
+                            style={{ height: "3rem", resize: "none" }}
                             onKeyDown={handleKeyPress}
-                            ref={inputRef}
+                            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
                             placeholder="메시지 입력"
                         />
-                        <button className="btn btn-sm btn-primary" onClick={handleSend}>전송</button>
+                        <button
+                            className="btn btn-primary"
+                            style={{ height: "3rem", lineHeight: "1.2rem" }}
+                            onClick={handleSend}
+                        >
+                            Send
+                        </button>
                     </div>
+
                 </div>
             </div>
-
-            {/* 삭제 모달 */}
-            {modalOpen && room && (
-                <div className="modal show d-block" tabIndex={-1} style={{ background: "rgba(0,0,0,0.4)" }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">방 삭제 확인</h5>
-                            </div>
-                            <div className="modal-body">
-                                <p>
-                                    <b>{room.title}</b> 방을 정말 삭제하시겠습니까?<br />
-                                    이 작업은 되돌릴 수 없습니다.
-                                </p>
-                            </div>
-                            <div className="modal-footer">
-                                <button className="btn btn-secondary" onClick={handleModalClose}>취소</button>
-                                <button className="btn btn-danger" onClick={handleDeleteConfirm}>삭제</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
