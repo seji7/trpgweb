@@ -9,6 +9,8 @@ import Header from "./components/Header";
 import { useEffect, useState } from "react";
 import { fetchMe } from "./api/memberApi";
 import { MemberInfo } from "./types/dto";
+import ProfileEditPage from "./pages/ProfileEditPage";
+import PasswordEditPage from "./pages/PasswordEditPage";
 
 function AppWrapper() {
   const location = useLocation();
@@ -40,6 +42,8 @@ function AppWrapper() {
       <div className={isPlayPage ? "" : "container mt-4"}>
         <Routes>
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/profile-edit" element={<ProfileEditPage />} />
+          <Route path="/password-edit" element={<PasswordEditPage />} />
           <Route path="/login" element={<LoginPage setCurrentUser={setCurrentUser} />} />
           <Route path="/rooms" element={<RoomListPage currentUser={currentUser} />} />
           <Route path="/room/create" element={<RoomCreatePage />} />
