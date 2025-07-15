@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getRoomDetail } from "../api/roomApi";
-import { MemberInfo, RoomResponse } from "../types/dto";
+import { getRoomDetail, getRoomLogs } from "../api/roomApi";
+import { MemberInfo, RoomResponse, ChatMessage } from "../types/dto";
 
 const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
     const { rno } = useParams<{ rno: string }>();
@@ -17,27 +17,48 @@ const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
     useEffect(() => {
         if (!rno) return;
 
-        let socket: WebSocket;
+        const roomId = Number(rno);
 
-        getRoomDetail(Number(rno))
+        // 중복 연결 방지
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            console.log("이미 WebSocket 연결 중");
+            return;
+        }
+
+        // 방 정보 불러오기
+        getRoomDetail(roomId)
             .then(setRoom)
             .catch(err => setError(err.response?.data?.message || "오류 발생"));
 
-        socket = new WebSocket(`ws://localhost:8080/ws/chat/${rno}`);
+        // 과거 채팅 불러오기
+        getRoomLogs(roomId)
+            .then((history: ChatMessage[]) => {
+                const formatted = history.map(log => {
+                    const time = new Date(log.createdAt).toLocaleTimeString();
+                    return `[${time}] ${log.senderUsername}: ${log.content}`;
+                });
+                setLogs(formatted);
+            })
+            .catch(err => console.error("채팅 로그 불러오기 실패", err));
+
+        // WebSocket 연결
+        const socket = new WebSocket(`ws://localhost:8080/ws/chat/${roomId}`);
 
         socket.onopen = () => {
             console.log("WebSocket 연결됨");
-            socketRef.current = socket; // ← 연결된 후에만 할당
+            socketRef.current = socket;
         };
 
         socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                const formatted = `[${data.senderId}] ${data.content}`;
+                const time = new Date(data.createdAt || Date.now()).toLocaleTimeString();
+
+                const formatted = `[${time}] ${data.senderUsername}: ${data.content}`;
+
                 setLogs(prev => [...prev, formatted]);
             } catch (e) {
-                console.warn("JSON parse 실패:", event.data);
-                setLogs(prev => [...prev, event.data]);
+                console.warn("메시지 파싱 실패", event.data);
             }
         };
 
@@ -46,12 +67,13 @@ const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
         };
 
         socket.onclose = () => {
-            console.log("WebSocket 연결 종료");
+            console.log("WebSocket 종료");
         };
 
+        // 컴포넌트 언마운트 시 소켓 닫기
         return () => {
-            console.log("WebSocket 클린업");
-            if (socket && socket.readyState === WebSocket.OPEN) {
+            console.log("WebSocket 정리");
+            if (socket.readyState === WebSocket.OPEN) {
                 socket.close();
             }
         };
@@ -69,7 +91,9 @@ const RoomPlayPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
         };
 
         socketRef.current.send(JSON.stringify(payload));
-        if (el) el.value = "";
+        if (el) {
+            el.value = "";
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {

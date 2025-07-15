@@ -59,3 +59,11 @@ export interface MemberInfo {
     userRole: string;
     accountLevel: number;       // ★ 등급 추가
 }
+
+export interface ChatMessage {
+    roomId: number;
+    senderUsername: string;
+    senderId: number;
+    content: string;
+    createdAt: string; // ISO 문자열 형태
+}

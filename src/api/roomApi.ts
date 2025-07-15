@@ -1,5 +1,5 @@
 import api from "./axiosInstance";
-import { RoomRegisterRequest, AddPlayerRequest } from "../types/dto";
+import { RoomRegisterRequest, AddPlayerRequest, ChatMessage } from "../types/dto";
 
 // 방 생성 (multipart/form-data)
 export const createRoom = async (data: RoomRegisterRequest) => {
@@ -38,4 +38,11 @@ export const addPlayer = async (rno: number, data: AddPlayerRequest) => {
 // 방 삭제
 export const deleteRoom = async (rno: number) => {
     return await api.delete(`/room/delete/${rno}`);
+};
+
+// 채팅 누적 저장
+export const getRoomLogs = async (roomId: number): Promise<ChatMessage[]> => {
+    const res = await api.get(`/api/messages/${roomId}`);
+    console.log("과거 로그", res.data);
+    return res.data;
 };
