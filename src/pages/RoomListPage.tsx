@@ -16,7 +16,10 @@ const RoomListPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
 
     useEffect(() => {
         getRoomList(0, 40)
-            .then(res => setRooms(res.content || []))
+            .then(res => {
+                console.log("room list res", res);
+                setRooms(res.data.content || []); // ✅ 여기 수정
+            })
             .catch(err => setError(err.response?.data?.message || "오류 발생"));
     }, []);
 

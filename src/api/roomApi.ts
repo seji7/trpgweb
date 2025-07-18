@@ -20,6 +20,7 @@ export const getRoomList = async (page: number, size: number) => {
     const res = await api.get("/room/list-data", {
         params: { page, size }
     });
+    console.log("room list res", res);
     return res.data; // Page<RoomResponse>
 };
 
@@ -44,5 +45,5 @@ export const deleteRoom = async (rno: number) => {
 export const getRoomLogs = async (roomId: number): Promise<ChatMessage[]> => {
     const res = await api.get(`/api/messages/${roomId}`);
     console.log("과거 로그", res.data);
-    return res.data;
+    return res.data.data;
 };

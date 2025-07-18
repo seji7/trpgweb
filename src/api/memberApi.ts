@@ -7,19 +7,23 @@ export const registerMember = async (data: MemberRegisterRequest) => {
     return res.data;
 };
 
-// 로그인 (userId는 username으로 보냄)
 export const login = async (data: LoginRequest) => {
-    const res = await api.post("/member/login", data, {
-        headers: { "Content-Type": "application/json" }
-    });
-    return res.data; // 실제 성공시 세션 쿠키 발급, 별도 반환 데이터는 없음
-};
+    const res = await api.post("/member/login", data);
+    const { accessToken, refreshToken } = res.data.data; // ApiResponse<TokenResponse>
 
-export const fetchMe = async (): Promise<MemberInfo> => {
-    const res = await api.get("/member/me", { withCredentials: true });
+    // ✅ 토큰 저장
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
     return res.data;
 };
 
-export const logout = async (): Promise<void> => {
-    await api.post("/member/logout", null, { withCredentials: true });
+export const fetchMe = async (): Promise<MemberInfo> => {
+    const res = await api.get("/member/me");
+    return res.data;
+};
+
+export const logout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    window.location.href = "/login";
 };
