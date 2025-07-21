@@ -16,9 +16,9 @@ const RoomListPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
 
     useEffect(() => {
         getRoomList(0, 40)
-            .then(res => {
-                console.log("room list res", res);
-                setRooms(res.data.content || []); // ✅ 여기 수정
+            .then(page => {
+                console.log("room list res", page);
+                setRooms(page.content || []);
             })
             .catch(err => setError(err.response?.data?.message || "오류 발생"));
     }, []);
@@ -59,45 +59,48 @@ const RoomListPage = ({ currentUser }: { currentUser: MemberInfo | null }) => {
             <h2 className="mb-4">방 목록</h2>
             {error && <div className="alert alert-danger">{error}</div>}
             <div className="row row-cols-1 row-cols-md-2 g-4">
-                {rooms.map(room => (
-                    <div key={room.rno} className="col" style={{ position: "relative" }}>
-                        {/* X 버튼: 방장 또는 관리자만 */}
-                        {canDelete(room) && (
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-danger position-absolute"
-                                style={{ top: 8, right: 12, zIndex: 10 }}
-                                onClick={e => { e.preventDefault(); handleDeleteClick(room); }}
-                                title="방 삭제"
-                            >×</button>
-                        )}
-                        <Link to={`/rooms/${room.rno}/play`} className="text-decoration-none text-dark">
-                            <div className="card h-100">
-                                {room.thumbnailUrl && (
-                                    <img
-                                        src={room.thumbnailUrl}
-                                        className="card-img-top"
-                                        alt="썸네일"
-                                        style={{ maxHeight: "200px", objectFit: "cover" }}
-                                    />
-                                )}
-                                <div className="card-body">
-                                    <h5 className="card-title">{room.title}</h5>
-                                    <p className="card-text">작성자: {room.ownerNickname}</p>
-                                    <p className="card-text">
-                                        <span className="badge bg-secondary me-2">
-                                            {getLevelLabel(room.accountLevel)}
-                                        </span>
-                                        | 게스트 접근: <b>{guestAccessLabels[room.guestAccessLevel] ?? "미정"}</b>
-                                    </p>
+                {rooms.map(room => {
+                    // console.log("room 썸네일:", room.thumbnailUrl);
+                    return (
+                        <div key={room.rno} className="col" style={{ position: "relative" }}>
+                            {/* X 버튼: 방장 또는 관리자만 */}
+                            {canDelete(room) && (
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-danger position-absolute"
+                                    style={{ top: 8, right: 12, zIndex: 10 }}
+                                    onClick={e => { e.preventDefault(); handleDeleteClick(room); }}
+                                    title="방 삭제"
+                                >×</button>
+                            )}
+                            <Link to={`/rooms/${room.rno}/play`} className="text-decoration-none text-dark">
+                                <div className="card h-100">
+                                    <div className="card-body">
+                                        <h5 className="card-title">{room.title}</h5>
+                                        <p className="card-text">작성자: {room.ownerNickname}</p>
+                                        {room.thumbnailUrl && (
+                                            <img
+                                                src={`http://localhost:8080${room.thumbnailUrl}`}
+                                                className="card-img-top"
+                                                alt="썸네일"
+                                                style={{ maxHeight: "200px", objectFit: "cover" }}
+                                            />
+                                        )}
+                                        <p className="card-text">
+                                            <span className="badge bg-secondary me-2">
+                                                {getLevelLabel(room.accountLevel)}
+                                            </span>
+                                            | 게스트 접근: <b>{guestAccessLabels[room.guestAccessLevel] ?? "미정"}</b>
+                                        </p>
+                                    </div>
+                                    <div className="card-footer text-muted">
+                                        최근 사용: {room.lastUsedAt}
+                                    </div>
                                 </div>
-                                <div className="card-footer text-muted">
-                                    최근 사용: {room.lastUsedAt}
-                                </div>
-                            </div>
-                        </Link>
-                    </div>
-                ))}
+                            </Link>
+                        </div>
+                    )
+                })}
             </div>
 
             {/* 모달(간단 구현) */}

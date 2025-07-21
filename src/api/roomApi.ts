@@ -12,7 +12,7 @@ export const createRoom = async (data: RoomRegisterRequest) => {
     const res = await api.post("/room/register-room", formData, {
         headers: { "Content-Type": "multipart/form-data" }
     });
-    return res.data;
+    return res.data.data;
 };
 
 // 방 목록
@@ -20,20 +20,20 @@ export const getRoomList = async (page: number, size: number) => {
     const res = await api.get("/room/list-data", {
         params: { page, size }
     });
-    console.log("room list res", res);
-    return res.data; // Page<RoomResponse>
+    // console.log("room list res", res);
+    return res.data.data; // Page<RoomResponse>
 };
 
 // 방 상세
 export const getRoomDetail = async (rno: number) => {
     const res = await api.get(`/room/detail-data/${rno}`);
-    return res.data;
+    return res.data.data;
 };
 
 // 플레이어 초대
 export const addPlayer = async (rno: number, data: AddPlayerRequest) => {
     const res = await api.post(`/room/${rno}/add-player`, data);
-    return res.data;
+    return res.data.data;
 };
 
 // 방 삭제
